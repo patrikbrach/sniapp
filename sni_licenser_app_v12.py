@@ -90,20 +90,8 @@ else:
     top = counts.sort_values(sort_col, ascending=False).head(top_n)
 
     st.dataframe(top, use_container_width=True)
-
-    chart_df = top.copy()
-    chart_df["Label"] = chart_df["Primary Sni Description"].fillna(
-        chart_df["Primary Sni Code"].astype(str)
-    )
-    chart_df = chart_df.set_index("Label")[sort_col]
-    st.bar_chart(chart_df)
-
-    st.download_button(
-        "Ladda ner Top SNI (CSV)",
-        data=top.to_csv(index=False).encode("utf-8-sig"),
-        file_name="top_sni_just_nu.csv",
-        mime="text/csv",
-    )
+    
+# (Graf borttagen – endast tabell visas)
 
 st.divider()  # visuellt avskiljare innan resten av appen
 
