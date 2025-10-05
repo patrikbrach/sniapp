@@ -106,6 +106,52 @@ share_without_any_top = (
     round(accounts_without_any_top / unique_accounts * 100, 2) if unique_accounts > 0 else 0.0
 )
 
+# --- TOP SNI JUST NU (visas först efter uppladdning) ---
+st.header("TOP SNI JUST NU")
+
+mode = st.radio(
+    "Räkna som:",
+    ["Antal rader (alla förekomster)", "Antal unika konton"],
+    horizontal=True,
+)
+
+top_n = st.number_input("Top N", min_value=1, max_value=50, value=10, step=1)
+
+req_cols = {"Primary Sni Code", "Primary Sni Description", "Account Id"}
+if not req_cols.issubset(df.columns):
+    miss = ", ".join(sorted(req_cols - set(df.columns)))
+    st.warning(f"Saknar kolumner: {miss}")
+else:
+    grp = df.groupby(["Primary Sni Code", "Primary Sni Description"], dropna=False)
+
+    if mode == "Antal unika konton":
+        counts = grp["Account Id"].nunique().reset_index(name="Antal konton")
+        sort_col = "Antal konton"
+    else:
+        counts = grp.size().reset_index(name="Antal rader")
+        sort_col = "Antal rader"
+
+    top = counts.sort_values(sort_col, ascending=False).head(top_n)
+
+    st.dataframe(top, use_container_width=True)
+
+    chart_df = top.copy()
+    chart_df["Label"] = chart_df["Primary Sni Description"].fillna(
+        chart_df["Primary Sni Code"].astype(str)
+    )
+    chart_df = chart_df.set_index("Label")[sort_col]
+    st.bar_chart(chart_df)
+
+    st.download_button(
+        "Ladda ner Top SNI (CSV)",
+        data=top.to_csv(index=False).encode("utf-8-sig"),
+        file_name="top_sni_just_nu.csv",
+        mime="text/csv",
+    )
+
+st.divider()  # visuellt avskiljare innan resten av appen
+
+
 # ---- UI: Huvudsammanfattning ----
 st.subheader("Sammanfattning")
 m1, m2, m3 = st.columns(3)
