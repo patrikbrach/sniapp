@@ -71,7 +71,7 @@ mode = st.radio(
     horizontal=True,
 )
 
-top_n = st.number_input("Top N", min_value=1, max_value=50, value=10, step=1)
+top_n = st.number_input("Top SNI", min_value=1, max_value=50, value=5, step=1)
 
 req_cols = {"Primary Sni Code", "Primary Sni Description", "Account Id"}
 if not req_cols.issubset(df.columns):
