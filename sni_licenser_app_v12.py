@@ -62,50 +62,6 @@ df["Account Id"] = df["Account Id"].astype(str).str.strip()
 if "Secondary Sni Description" in df.columns:
     df["Secondary Sni Description"] = df["Secondary Sni Description"].astype(str).str.strip()
 
-# Välj SNI-description
-unique_sni_desc = df["Primary Sni Description"].dropna().unique()
-unique_sni_desc = sorted([s for s in unique_sni_desc if s and s != "nan"])
-
-col_select, col_topn = st.columns([3,1])
-with col_select:
-    sni_choice = st.selectbox("Välj Primary SNI Description", unique_sni_desc)
-with col_topn:
-    top_n = st.number_input("Antal topp-produkter", min_value=1, max_value=10, value=2, step=1)
-
-if not sni_choice:
-    st.stop()
-
-# Filter för vald SNI
-df_sni = df[df["Primary Sni Description"] == sni_choice].copy()
-
-# Antal kunder (unika konton) med vald SNI
-unique_accounts = df_sni["Account Id"].nunique()
-
-# Topp-produkter (unika konton per produkt)
-prod_counts_all = (
-    df_sni.groupby("Product Name")["Account Id"].nunique()
-    .sort_values(ascending=False)
-    .rename("Antal konton")
-    .reset_index()
-)
-if prod_counts_all.empty:
-    st.warning("Inga produkter hittades för vald SNI.")
-    st.stop()
-
-prod_counts_all["Andel av kunder (%)"] = (
-    prod_counts_all["Antal konton"] / unique_accounts * 100
-).round(2)
-top_products = prod_counts_all.head(top_n)["Product Name"].tolist()
-
-# Konton som saknar ALLA topp N-produkter
-accounts_with_top = (
-    df_sni[df_sni["Product Name"].isin(top_products)]["Account Id"].drop_duplicates()
-)
-accounts_without_any_top = unique_accounts - accounts_with_top.nunique()
-share_without_any_top = (
-    round(accounts_without_any_top / unique_accounts * 100, 2) if unique_accounts > 0 else 0.0
-)
-
 # --- TOP SNI JUST NU (visas först efter uppladdning) ---
 st.header("TOP SNI JUST NU")
 
@@ -151,6 +107,50 @@ else:
 
 st.divider()  # visuellt avskiljare innan resten av appen
 
+
+# Välj SNI-description
+unique_sni_desc = df["Primary Sni Description"].dropna().unique()
+unique_sni_desc = sorted([s for s in unique_sni_desc if s and s != "nan"])
+
+col_select, col_topn = st.columns([3,1])
+with col_select:
+    sni_choice = st.selectbox("Välj Primary SNI Description", unique_sni_desc)
+with col_topn:
+    top_n = st.number_input("Antal topp-produkter", min_value=1, max_value=10, value=2, step=1)
+
+if not sni_choice:
+    st.stop()
+
+# Filter för vald SNI
+df_sni = df[df["Primary Sni Description"] == sni_choice].copy()
+
+# Antal kunder (unika konton) med vald SNI
+unique_accounts = df_sni["Account Id"].nunique()
+
+# Topp-produkter (unika konton per produkt)
+prod_counts_all = (
+    df_sni.groupby("Product Name")["Account Id"].nunique()
+    .sort_values(ascending=False)
+    .rename("Antal konton")
+    .reset_index()
+)
+if prod_counts_all.empty:
+    st.warning("Inga produkter hittades för vald SNI.")
+    st.stop()
+
+prod_counts_all["Andel av kunder (%)"] = (
+    prod_counts_all["Antal konton"] / unique_accounts * 100
+).round(2)
+top_products = prod_counts_all.head(top_n)["Product Name"].tolist()
+
+# Konton som saknar ALLA topp N-produkter
+accounts_with_top = (
+    df_sni[df_sni["Product Name"].isin(top_products)]["Account Id"].drop_duplicates()
+)
+accounts_without_any_top = unique_accounts - accounts_with_top.nunique()
+share_without_any_top = (
+    round(accounts_without_any_top / unique_accounts * 100, 2) if unique_accounts > 0 else 0.0
+)
 
 # ---- UI: Huvudsammanfattning ----
 st.subheader("Sammanfattning")
